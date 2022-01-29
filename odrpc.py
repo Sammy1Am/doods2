@@ -20,6 +20,7 @@ class DetectRequest:
     id: Optional[str] = None
     detector_name: Optional[str] = None
     image: Optional[str] = ""
+    crop: Optional[bool] = False
     throttle: Optional[float] = 0.0
     data: str = ""
     preprocess: List[str] = field(default_factory=list)

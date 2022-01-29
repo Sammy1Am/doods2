@@ -56,6 +56,9 @@ Every request to DOODS involves the Detect Request JSON object that looks like t
   // The image option determines, for API calls that return an image, what format the image should be.
   // Supported options currently are "jpeg" and "png"
   "image": "jpeg",
+  // When used as a request in the `mqtt` section, determines if the images published for each detection
+  // should be cropped to their detection boxes or not.  Currently has no effect on API calls
+  "crop": False,
   // The throtle option determines, for streaming API calls only, how often it should return results
   // in seconds. For example, 5 means return 1 result about every 5 seconds. A value of 0 indicates
   // it should return results as fast as it can. 
