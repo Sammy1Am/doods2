@@ -79,6 +79,32 @@ class DetectResponse:
         ret = asdict(self)
         return ret if include_none else clean_none(ret)
 
+@dataclass
+class CPAIPrediction:
+    x_min: float
+    y_min: float
+    x_max: float
+    y_max: float
+    confidence: float
+    label: str
+
+@dataclass
+class CPAIDetectResponse:
+    success: bool = True
+    message: Optional[str] = None
+    error: Optional[str] = None
+    predictions: List[CPAIPrediction] = field(default_factory=list)
+    count: Optional[int] = None
+    inferenceMs: Optional[int] = None
+    processMs: Optional[int] = None
+    moduleId: Optional[str] = None
+    moduleName: Optional[str] = None
+    command: Optional[str] = None
+    executionProvider: Optional[str] = None
+    canUseGPU: Optional[bool] = None
+    analysisRoundTripMs: Optional[int] = None
+
+
 def clean_none(d):
     for key, value in list(d.items()):
         if value is None:

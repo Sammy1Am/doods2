@@ -5,20 +5,27 @@ import base64
 import logging
 import asyncio
 import threading
-from fastapi import status, FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import File, status, FastAPI, WebSocket, WebSocketDisconnect, UploadFile
 from fastapi.responses import Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from streamer import Streamer
 from concurrent.futures import ThreadPoolExecutor
 from prometheus_fastapi_instrumentator import Instrumentator
 
+from PIL import Image
+from io import BytesIO
+import numpy as np
+from doods import Doods
+
 import tracemalloc
+
+
 
 
 class API():
     def __init__(self, config, doods):
         self.config = config
-        self.doods = doods
+        self.doods: Doods = doods
         self.api = FastAPI()
         # Borrow the uvicorn logger because it's pretty.
         self.logger = logging.getLogger("doods.api")
@@ -51,6 +58,30 @@ class API():
             if detect_request.image:
                 detect_response.image = base64.b64encode(detect_response.image)
             return detect_response
+        
+        @self.api.post("/detect_cpai", response_model=odrpc.CPAIDetectResponse, response_model_exclude_none=True)
+        async def detect(response: Response, image: UploadFile = File(None)):
+            # logger.info('detect request: %s', detect_request)
+            np_image = np.array(Image.open(BytesIO(await image.read())))
+            cpai_request = odrpc.DetectRequest()
+            cpai_request.data = np_image
+            cpai_request.detect['*'] = 40 # Set threshold to 40 for now
+            detect_response = self.doods.detect(cpai_request)
+            if detect_response.error:
+                response.status_code = status.HTTP_400_BAD_REQUEST
+
+            cpai_response = odrpc.CPAIDetectResponse()
+            for det in detect_response.detections:
+                cpai_response.predictions.append(odrpc.CPAIPrediction(
+                    x_min=det.left,
+                    y_min=det.top,
+                    x_max=det.right,
+                    y_max=det.bottom,
+                    confidence=det.confidence,
+                    label=det.label.lower() #Frigate really wants these to be lowercase
+                ))
+
+            return cpai_response
         
         @self.api.websocket("/detect")
         async def detect_stream(websocket: WebSocket):
