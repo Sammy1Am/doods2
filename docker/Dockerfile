@@ -14,5 +14,7 @@ ADD . .
 
 ENV TF_CPP_MIN_LOG_LEVEL=3
 
+RUN python3 -m pip install python-multipart
+
 ENTRYPOINT ["python3", "main.py"]
 CMD ["api"]
